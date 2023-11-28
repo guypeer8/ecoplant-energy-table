@@ -1,0 +1,56 @@
+version: '3.3'
+
+services:
+  mysql:
+    image: mysql:latest
+    container_name: mysql_container
+    environment:
+      MYSQL_ROOT_PASSWORD: super_secret_password
+      MYSQL_USER: mysql_user
+      MYSQL_PASSWORD: mysql_password
+      MYSQL_DATABASE: ecoplant
+    ports:
+      - 3306:3306
+    volumes:
+      - ./mysql/data:/var/lib/mysql
+      - ./mysql/init-scripts:/docker-entrypoint-initdb.d
+      - ./mysql/init-scripts/energy_data.csv:/var/lib/mysql-files/energy_data.csv
+    restart: always
+    networks:
+      - backend
+
+  node:
+    build:
+      context: ./server
+      dockerfile: Dockerfile.dev
+    container_name: node_container
+    volumes:
+      - ./server:/app
+      - ./server/node_modules
+    ports:
+      - 3001:3001
+    depends_on:
+      - mysql
+    networks:
+      - backend
+
+  react:
+    build:
+      context: ./client
+      dockerfile: Dockerfile.dev
+    container_name: react_container
+    environment:
+      REACT_APP_NODE_API_URL: http://localhost:3001/api
+    volumes:
+      - ./client:/app
+      - ./client/node_modules
+    ports:
+      - 3000:3000
+    depends_on:
+      - node
+    networks:
+      - backend
+
+networks:
+  backend:
+    driver: bridge
