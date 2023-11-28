@@ -1,0 +1,1 @@
+export const NODE_API = process.env.REACT_APP_NODE_API_URL || 'http://localhost:3001/api';
